@@ -10,6 +10,12 @@ A full-stack web app for small teams (3–10 people) to plan work in a simple ag
 
 > **Demo video:** _add your link here (YouTube unlisted / Google Drive / file in `docs/`)_
 
+## Documentation
+
+- [API documentation](docs/API.md) (plus interactive Swagger at `/docs`)
+- [Database schema](docs/DATABASE_SCHEMA.md)
+- [Architecture overview](docs/ARCHITECTURE.md)
+
 ## Features
 
 - Register and log in (bcrypt-hashed passwords, JWT bearer tokens)
@@ -17,6 +23,7 @@ A full-stack web app for small teams (3–10 people) to plan work in a simple ag
 - Stories have status, priority, story points and an assignee; tasks have status, assignee and due date
 - Kanban-style board per project (To do / In progress / Done)
 - Progress is calculated up the hierarchy: tasks done → story progress → project progress
+- Story board column updates automatically from its tasks' statuses
 - Background job finds overdue tasks and sends in-app reminders; job log page shows attempts and failures
 - Interactive API docs at `/docs`
 
@@ -152,7 +159,7 @@ Errors use standard status codes: 401 unauthenticated, 403 forbidden, 404 not fo
 - **Retry with `time.sleep` in the worker thread:** simple and fine for a handful of tasks. A queue with delayed retries would be better at scale.
 - **Shared workspace permissions:** any logged-in user can see and edit all projects (a small trusted team). Only the project owner can delete a project. Roles and per-project membership are listed under "next".
 - **Progress is computed on read** from task states instead of stored, so it can never go stale. Cost: loads tasks per project; fine at this scale (eager loading avoids N+1 queries).
-- **Story status is manual** and not auto-derived from tasks, so a team can decide what "done" means.
+- **Story status is derived from its tasks** (all tasks to do → To do; all done → Done; anything else → In progress). It is computed on every read, so it can never be stale, and cannot be edited by hand once the story has tasks (409). Stories with no tasks keep their manually set status.
 - **Hash routing, no router library:** fewer dependencies for three screens.
 - **create_all instead of migrations:** quick to start; Alembic is the next step for schema changes.
 
